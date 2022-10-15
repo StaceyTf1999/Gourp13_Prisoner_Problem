@@ -52,7 +52,6 @@ select.strategy <- function(strategy){
 
 
 
-# if too slow, change the loop
 Pone <- function(n, k, strategy, nreps){
   strategy = select.strategy(strategy)
   correct = 0
@@ -68,7 +67,7 @@ Pone <- function(n, k, strategy, nreps){
 }
 
 
-
+#
 
 Pall <- function(n, strategy, nreps){
   strategy = select.strategy(strategy)
@@ -91,9 +90,39 @@ Pall <- function(n, strategy, nreps){
 }
 
 
+
+# 
+
+success_prob <- function(n, nreps) {
+  cat('Simulated', {nreps}, 'times with', {n}, 'prisoners\n\n')
+  for (strategy in 1:3) {
+    cat('Strategy ', {strategy}, ':\n', sep = '')
+    cat('P(individual success) = ', {Pone(n, 1, strategy, nreps)}, '\n' ,sep = '')
+    cat('P(joint success) = ', {Pall(n, strategy, nreps)}, '\n\n' ,sep = '')
+  }
+}
+
+
+# Likang write this part
+
+
+
+
+
+prob_non_zero <- function(a){
+  non_zero = rep(0,ncol(a))
+  for (k in 1:ncol(a)) {
+    non_zero[k] = (length(which(a[,k]!=0)))/nrow(a)
+  }
+  return(non_zero)
+}
+
+
+
+
 dloop <- function(n, nreps){
   # explain what is a 
-  a = rep(0,2*n)
+  a = array(0,dim=c(nreps,2*n))
   for (j in 1:nreps) {
     card_num <- sample(c(1:(2*n)), size = 2*n, replace = FALSE)
     next_box <- card_num[1]
@@ -103,26 +132,46 @@ dloop <- function(n, nreps){
       if (sum(card_num)==0){
         break
       }
-      else if (card_num[next_box] != card_num[which(card_num!=0)][1]){ # card_num[which(card_num!=0)[1] means the index the first non-zero element
+      else if (card_num[next_box] != which(card_num!=0)[1]){ # card_num[which(card_num!=0)[1] means the index the first non-zero element
         # can't use loop[i+1] = '', since in this cycle, i will increase
         loop = append(loop, card_num[next_box])
         next_box = card_num[next_box]
-      } else { # if we got to this point, it means we find a loop, hence we drop the loop from card_num, and add one to a in the position as the length of the loop, after which we set the next_box = the first element of the new card_num, as well as redefine the loop
-        # card_num_text = card_num
-        # next_box <- card_num[!card_num %in% loop][1]
+      } 
+      else { # if we got to this point, it means we find a loop, hence we drop the loop from card_num, and add one to a in the position as the length of the loop, after which we set the next_box = the first element of the new card_num, as well as redefine the loop
+        loop = append(loop, card_num[next_box])
         card_num[card_num %in% loop] = 0
-        next_box <- card_num[which(card_num!=0)][1]
-        a[length(loop)] = a[length(loop)] + 1
-        loop <- c(next_box)
+        next_box <- which(card_num!=0)[1]
+        a[j,length(loop)] = a[j,length(loop)] + 1
+        loop <- c()
+        # cat('card_num',{card_num}, '\nloop', {loop},'\n')
       }
     }
   }
-  return(a/nreps)
+  return(prob_non_zero(a))
 }
+
+
+
+
+
+
+prob = dloop(5,100)
+
+
+success_prob(5, 10000)
+success_prob(50, 10000)
+
+# write!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+print('Include in your comments brief remarks on what is surprising about the results.')
 
 #  probability that there is no loop longer than 50
 
 prob = dloop(50,10000)
+
+barplot(prob, col='yellow', main='Probalities of loop occurrence length
+        from 1 to 2n')
+
 
 1-sum(prob[51:100])
 
